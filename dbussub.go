@@ -8,6 +8,7 @@ import (
 	"github.com/godbus/dbus"
 )
 
+// NewManager allocates and returns a new manager object.
 func NewManager(conn *dbus.Conn) *Manager {
 	if conn == nil {
 		panic("conn is nil")
@@ -21,6 +22,7 @@ func NewManager(conn *dbus.Conn) *Manager {
 	return mgr
 }
 
+// Manager is a subscriptions manager.
 type Manager struct {
 	mu   sync.RWMutex
 	conn *dbus.Conn
@@ -88,6 +90,10 @@ func (mgr *Manager) getNameOwner(name string) (string, error) {
 	return s, nil
 }
 
+// Subscribe creates a new subscription with the given options.
+//
+// For more information about options see match rules that correspond to
+// `Option` functions [here](https://dbus.freedesktop.org/doc/dbus-specification.html#message-bus-routing-match-rules).
 func (mgr *Manager) Subscribe(opts ...Option) (*Subscription, error) {
 	sub := &Subscription{
 		mgr:  mgr,
@@ -165,6 +171,8 @@ func (mgr *Manager) Close() error {
 // Option is a subscription option.
 type Option func(s *Subscription)
 
+// WithSender matches messages sent by the named sender,
+// it can be both a unique or a well-known name.
 func WithSender(sender string) Option {
 	return func(s *Subscription) {
 		// we should distinguish unique and well-known names,
@@ -178,19 +186,21 @@ func WithSender(sender string) Option {
 	}
 }
 
+// WithInterface matches messages sent by the named interface.
 func WithInterface(iface string) Option {
 	return func(s *Subscription) {
 		s.iface = iface
 	}
 }
 
+// WithMember matches messages that have the signal name.
 func WithMember(member string) Option {
 	return func(s *Subscription) {
 		s.member = member
 	}
 }
 
-// WithPath
+// WithPath matches messages that sent by the named object path.
 //
 // Cannot be combined with `WithPath`.
 func WithPath(path dbus.ObjectPath) Option {
@@ -199,7 +209,7 @@ func WithPath(path dbus.ObjectPath) Option {
 	}
 }
 
-// WithPathNamespace
+// WithPathNamespace matches messages that's path matches the named namespace.
 //
 // Cannot be combined with `WithPath`.
 func WithPathNamespace(namespace dbus.ObjectPath) Option {
