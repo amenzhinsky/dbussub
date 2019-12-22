@@ -93,6 +93,24 @@ func TestPathNamespace(t *testing.T) {
 	checkSignal(t, sub, 4)
 }
 
+func TestClose(t *testing.T) {
+	mgr := NewManager(connect(t, ""))
+	sub, err := mgr.Subscribe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = mgr.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = mgr.Err(); err != errClosed {
+		t.Errorf("mgr.Err() = %v, want %v", err, errClosed)
+	}
+	if err = sub.Err(); err != errClosed {
+		t.Errorf("sub.Err() = %v, want %v", err, errClosed)
+	}
+}
+
 func checkClose(t *testing.T, closer io.Closer) {
 	if err := closer.Close(); err != nil {
 		t.Fatalf("close error: %s", err)

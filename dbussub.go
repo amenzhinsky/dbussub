@@ -28,7 +28,7 @@ type Manager struct {
 	conn *dbus.Conn
 	subs []*Subscription
 	done chan struct{}
-	err  error // TODO
+	err  error
 }
 
 func (mgr *Manager) rx() {
@@ -40,7 +40,7 @@ func (mgr *Manager) rx() {
 		select {
 		case sig, ok := <-sigc:
 			if !ok {
-				mgr.Close()
+				mgr.close(errors.New("dbussub: signals channel closed"))
 				return
 			}
 			mgr.mu.RLock()
@@ -126,7 +126,7 @@ func (mgr *Manager) unsubscribe(sub *Subscription) error {
 			mgr.mu.Unlock()
 			return err
 		}
-		mgr.subs[i].close()
+		mgr.subs[i].close(nil)
 		mgr.subs = append(mgr.subs[:i], mgr.subs[i+1:]...)
 		mgr.mu.Unlock()
 		return nil
@@ -148,20 +148,28 @@ func (mgr *Manager) Err() error {
 	return mgr.err
 }
 
+var errClosed = errors.New("dbussub: closed")
+
 // Close closes the manager, all its subs and D-Bus connection.
 func (mgr *Manager) Close() error {
+	mgr.close(errClosed)
+	return mgr.conn.Close()
+}
+
+func (mgr *Manager) close(err error) {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 	select {
 	case <-mgr.done:
-		return nil
+		return
 	default:
 	}
+
+	mgr.err = errClosed
 	close(mgr.done)
 	for _, s := range mgr.subs {
-		s.close()
+		s.close(err)
 	}
-	return mgr.conn.Close()
 }
 
 // Option is a subscription option.
@@ -227,6 +235,7 @@ type Subscription struct {
 	mgr  *Manager
 	send chan *dbus.Signal
 	done chan struct{}
+	err  error
 
 	sender        string
 	senderUniq    string
@@ -309,9 +318,14 @@ func (sub *Subscription) matches(sig *dbus.Signal) bool {
 	return true
 }
 
-func (sub *Subscription) close() {
+func (sub *Subscription) close(err error) {
+	sub.err = err
 	close(sub.done)
 	close(sub.send)
+}
+
+func (sub *Subscription) Err() error {
+	return sub.err
 }
 
 // Close closes the subscription and the channel returned by `C()`.

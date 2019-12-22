@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/amenzhinsky/dbus-codegen-go"
+	"github.com/amenzhinsky/dbussub"
 	"github.com/godbus/dbus/v5"
 )
 
