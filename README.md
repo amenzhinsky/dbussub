@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/amenzhinsky/dbus-codegen-go"
-	"github.com/godbus/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 func main() {
