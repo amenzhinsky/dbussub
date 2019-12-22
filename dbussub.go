@@ -69,15 +69,11 @@ func (mgr *Manager) rx() {
 }
 
 func (mgr *Manager) addMatch(sub *Subscription) error {
-	return mgr.conn.BusObject().Call(
-		"org.freedesktop.DBus.AddMatch", 0, sub.rule(),
-	).Store()
+	return mgr.conn.AddMatchSignal(sub.match()...)
 }
 
 func (mgr *Manager) removeMatch(sub *Subscription) error {
-	return mgr.conn.BusObject().Call(
-		"org.freedesktop.DBus.RemoveMatch", 0, sub.rule(),
-	).Store()
+	return mgr.conn.RemoveMatchSignal(sub.match()...)
 }
 
 func (mgr *Manager) getNameOwner(name string) (string, error) {
@@ -245,27 +241,44 @@ func (sub *Subscription) C() <-chan *dbus.Signal {
 	return sub.send
 }
 
-func (sub *Subscription) rule() string {
-	b := strings.Builder{}
-	b.WriteString("type='signal'")
-	if sub.sender != "" {
-		b.WriteString(",sender='" + sub.sender + "'")
-	} else if sub.senderUniq != "" {
-		b.WriteString(",sender='" + sub.senderUniq + "'")
+func (sub *Subscription) match() []dbus.MatchOption {
+	// calculate number of match option first to reduce allocations number
+	var num int
+	if sub.sender != "" || sub.senderUniq != "" {
+		num++
 	}
 	if sub.iface != "" {
-		b.WriteString(",interface='" + sub.iface + "'")
+		num++
 	}
 	if sub.member != "" {
-		b.WriteString(",member='" + sub.member + "'")
+		num++
 	}
 	if sub.path != "" {
-		b.WriteString(",path='" + string(sub.path) + "'")
+		num++
 	}
 	if sub.pathNamespace != "" {
-		b.WriteString(",path_namespace='" + string(sub.pathNamespace) + "'")
+		num++
 	}
-	return b.String()
+
+	opts := make([]dbus.MatchOption, 0, num)
+	if sub.sender != "" {
+		opts = append(opts, dbus.WithMatchSender(sub.sender))
+	} else if sub.senderUniq != "" {
+		opts = append(opts, dbus.WithMatchSender(sub.senderUniq))
+	}
+	if sub.iface != "" {
+		opts = append(opts, dbus.WithMatchInterface(sub.iface))
+	}
+	if sub.member != "" {
+		opts = append(opts, dbus.WithMatchMember(sub.member))
+	}
+	if sub.path != "" {
+		opts = append(opts, dbus.WithMatchObjectPath(sub.path))
+	}
+	if sub.pathNamespace != "" {
+		opts = append(opts, dbus.WithMatchPathNamespace(sub.pathNamespace))
+	}
+	return opts
 }
 
 func (sub *Subscription) matches(sig *dbus.Signal) bool {
