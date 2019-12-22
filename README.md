@@ -1,6 +1,8 @@
 # dbussub
 
-D-Bus signal subscription routines.
+D-Bus signal subscription multiplexer.
+
+Current implementation of [dbus](https://github.com/godbus/dbus) library supports only channel registration where all received signals are sent to. This module solves the problem giving ability to register subscriptions for the given set of matchers.
 
 ## Usage
 
