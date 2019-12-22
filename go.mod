@@ -1,4 +1,4 @@
-module github.com/amenzhinsky/dbus-codegen-go
+module github.com/amenzhinsky/dbussub
 
 require github.com/godbus/dbus/v5 v5.0.3
 

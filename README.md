@@ -31,21 +31,25 @@ func run() error {
 
 	// subscribe to specific destination and interface
 	mgr := dbussub.NewManager(conn)
-	sub, err := mgr.Subscribe(
+	sub1, err := mgr.Subscribe(
 		dbussub.WithSender("org.freedesktop.systemd1"),
 		dbussub.WithInterface("org.freedesktop.systemd1.Manager"),
 	)
 	if err != nil {
 		return err
 	}
-	go printSignals(sub)
+	defer mgr.Unsubscribe(sub1)
+
+	go printSignals(sub1)
 
 	// subscribe to all signals
-	sub, err = mgr.Subscribe()
+	sub2, err := mgr.Subscribe()
 	if err != nil {
 		return err
 	}
-	go printSignals(sub)
+	defer mgr.Unsubscribe(sub2)
+
+	go printSignals(sub2)
 
 	select {}
 	return nil

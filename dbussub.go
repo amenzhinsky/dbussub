@@ -92,7 +92,6 @@ func (mgr *Manager) getNameOwner(name string) (string, error) {
 // `Option` functions [here](https://dbus.freedesktop.org/doc/dbus-specification.html#message-bus-routing-match-rules).
 func (mgr *Manager) Subscribe(opts ...Option) (*Subscription, error) {
 	sub := &Subscription{
-		mgr:  mgr,
 		done: make(chan struct{}),
 		send: make(chan *dbus.Signal, 1),
 	}
@@ -116,7 +115,7 @@ func (mgr *Manager) Subscribe(opts ...Option) (*Subscription, error) {
 	return sub, nil
 }
 
-func (mgr *Manager) unsubscribe(sub *Subscription) error {
+func (mgr *Manager) Unsubscribe(sub *Subscription) error {
 	mgr.mu.Lock()
 	for i := range mgr.subs {
 		if sub != mgr.subs[i] {
@@ -232,7 +231,6 @@ func WithSendChannel(send chan *dbus.Signal) Option {
 
 // Subscription represents a receiver of D-Bus signals.
 type Subscription struct {
-	mgr  *Manager
 	send chan *dbus.Signal
 	done chan struct{}
 	err  error
@@ -326,9 +324,4 @@ func (sub *Subscription) close(err error) {
 
 func (sub *Subscription) Err() error {
 	return sub.err
-}
-
-// Close closes the subscription and the channel returned by `C()`.
-func (sub *Subscription) Close() error {
-	return sub.mgr.unsubscribe(sub)
 }

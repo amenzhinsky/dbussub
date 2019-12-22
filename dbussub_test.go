@@ -21,7 +21,7 @@ func TestSubscribe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer checkClose(t, s0)
+	defer checkUnsubscribe(t, mgr, s0)
 
 	s1, err := mgr.Subscribe(
 		WithSender("org.dbussub"),
@@ -33,7 +33,7 @@ func TestSubscribe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer checkClose(t, s1)
+	defer checkUnsubscribe(t, mgr, s1)
 
 	// invalid path
 	emit(t, conn, "/", "org.dbussub.Sig.Int", 1)
@@ -78,7 +78,7 @@ func TestPathNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer checkClose(t, sub)
+	defer checkUnsubscribe(t, mgr, sub)
 
 	emit(t, conn, "/", "org.dbussub.Sig.Int", 1)
 	checkNoSignal(t, sub)
@@ -114,6 +114,13 @@ func TestClose(t *testing.T) {
 func checkClose(t *testing.T, closer io.Closer) {
 	if err := closer.Close(); err != nil {
 		t.Fatalf("close error: %s", err)
+	}
+}
+
+func checkUnsubscribe(t *testing.T, mgr *Manager, sub *Subscription) {
+	t.Helper()
+	if err := mgr.Unsubscribe(sub); err != nil {
+		t.Fatal(err)
 	}
 }
 
