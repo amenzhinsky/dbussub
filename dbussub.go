@@ -131,7 +131,7 @@ func (mgr *Manager) Unsubscribe(sub *Subscription) error {
 		return nil
 	}
 	mgr.mu.Unlock()
-	return errors.New("not found")
+	return errors.New("dbussub: not found")
 }
 
 // Done returns the channel that is closed when the manager is closed or encountered an error.
